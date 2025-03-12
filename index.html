@@ -141,7 +141,8 @@
 
           const classNameMap = {
             "AnnualCrop": "Crops",
-            "SeaLake": "Sea / Lake"
+            "SeaLake": "Sea / Lake",
+            "Industrial": "Urban / Industrial"
           };
 
           const labels = Object.keys(data.predictions).map(label => classNameMap[label] || label);

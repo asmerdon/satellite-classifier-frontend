@@ -15,7 +15,10 @@ This project uses Mapbox’s satellite tiles. The API key is exposed in `index.h
 
 ## Backend
 The classification model API is hosted separately at:
-`https://earth-observation.onrender.com/predict/`
+`https://earth-observation.onrender.com/docs/`
+
+The repository for the backend classification model can be found at:
+https://github.com/asmerdon/earth-observation
 
 ## Live Version
 https://asmerdon.github.io/satellite-classifier-frontend/

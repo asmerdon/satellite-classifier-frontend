@@ -1,6 +1,6 @@
 # Satellite Classifier Frontend
 
-This is the frontend for the Satellite Image Classifier — a web app that uses satellite imagery and a deep learning model to classify land types (e.g., forest, crops, sea, industrial, etc).
+This is the frontend for the Satellite Image Classifier - a web app that uses satellite imagery and a deep learning model to classify land types (e.g., forest, crops, sea, industrial, etc).
 
 ## How It Works
 - A semi-transparent mask highlights the region being classified.
@@ -18,7 +18,8 @@ The classification model API is hosted separately at:
 `https://earth-observation.onrender.com/predict/`
 
 ## Live Version
-
+https://asmerdon.github.io/satellite-classifier-frontend/
 
 ## Example Screenshot
-(Optional: include a screenshot of the app in use if desired)
+![image](https://github.com/user-attachments/assets/00e15f90-71e8-4764-8d03-ac849e7de653)
+

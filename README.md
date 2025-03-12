@@ -24,5 +24,4 @@ https://github.com/asmerdon/earth-observation
 https://asmerdon.github.io/satellite-classifier-frontend/
 
 ## Example Screenshot
-![image](https://github.com/user-attachments/assets/00e15f90-71e8-4764-8d03-ac849e7de653)
-
+![image](https://github.com/user-attachments/assets/21ca6cc2-b86f-448a-9ad5-8cb8f22f2a67)

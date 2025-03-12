@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Classifier</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #map {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    .overlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0);
+      z-index: 10;
+      pointer-events: none;
+    }
+    .clear-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      margin-left: -250px;
+      margin-top: -250px;
+      background-color: transparent;
+      box-shadow: 0 0 0 9999px rgba(255,255,255,0.6);
+      border: 2px dashed #333;
+      z-index: 11;
+      pointer-events: none;
+    }
+    .ui-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.95);
+      border-radius: 12px;
+      padding: 20px;
+      z-index: 20;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-align: center;
+      min-width: 300px;
+    }
+    .btn {
+      background-color: #0077cc;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn:hover {
+      background-color: #005fa3;
+    }
+    canvas {
+      margin-top: 10px;
+    }
+    .popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      z-index: 1000;
+      width: 60%;
+      max-width: 500px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    .popup .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="overlay"></div>
+  <div class="clear-box"></div>
+  <div class="ui-panel">
+    <div id="coords">Lat: --, Lng: --</div>
+    <button class="btn" onclick="classifyArea()">Classify This Area</button>
+    <canvas id="resultsChart" width="300" height="200"></canvas>
+  </div>
+
+  <div class="popup" id="introPopup">
+    <div class="close-btn" onclick="document.getElementById('introPopup').style.display='none'">&times;</div>
+    <h2>Welcome to the Satellite Classifier</h2>
+    <p>This tool allows you to classify different land types (forest, pasture, crop, industrial land, sea/lake, river) from satellite imagery using a deep learning model.</p>
+    <p><strong>Note:</strong> The first request might take up to <strong>50 seconds</strong> as the server spins up (thanks to our free-tier hosting on Render.com).</p>
+    <button class="btn" onclick="document.getElementById('introPopup').style.display='none'">Got it, let's go!</button>
+  </div>
+
+  <script>
+    const map = L.map('map').setView([52.1976, -0.0115], 14);
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/512/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXNtZXJkb24yMDAwIiwiYSI6ImNtNno2Y2lwMjAxcHcya3NqNnhpdnlwYWsifQ.6zBTAp_P5fuUILaFIHDSOw', {
+      attribution: '&copy; Mapbox & OpenStreetMap contributors',
+      tileSize: 512,
+      zoomOffset: -1
+    }).addTo(map);
+
+    function classifyArea() {
+      const bounds = map.getBounds();
+      const zoom = map.getZoom();
+
+      const url = `https://earth-observation.onrender.com/predict/?north=${bounds.getNorth()}&south=${bounds.getSouth()}&east=${bounds.getEast()}&west=${bounds.getWest()}&zoom=${zoom}`;
+
+      fetch(url, { method: 'POST' })
+        .then(async res => {
+          if (!res.ok) throw new Error(`Error: ${res.status}`);
+          return await res.json();
+        })
+        .then(data => {
+          if (!data.predictions) throw new Error('No predictions in response');
+
+          const classNameMap = {
+            "AnnualCrop": "Crops",
+            "SeaLake": "Sea / Lake"
+          };
+
+          const labels = Object.keys(data.predictions).map(label => classNameMap[label] || label);
+          const values = Object.values(data.predictions);
+
+          const ctx = document.getElementById('resultsChart').getContext('2d');
+          if (window.chartInstance) window.chartInstance.destroy();
+
+          window.chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Classification Confidence',
+                data: values,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)'
+              }]
+            },
+            options: {
+              scales: { y: { beginAtZero: true, max: 1 } }
+            }
+          });
+        })
+        .catch(err => {
+          console.error('Classification error:', err);
+          const ctx = document.getElementById('resultsChart').getContext('2d');
+          ctx.clearRect(0, 0, 300, 200);
+        });
+    }
+
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      document.getElementById('coords').innerText = `Lat: ${center.lat.toFixed(4)}, Lng: ${center.lng.toFixed(4)}`;
+    });
+  </script>
+</body>
+</html>
